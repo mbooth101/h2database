@@ -204,7 +204,9 @@ public class Build extends BuildBase {
         download();
         String classpath = "temp" +
                 File.pathSeparator + "ext/servlet-api-3.1.0.jar" +
-                File.pathSeparator + "ext/lucene-core-3.6.2.jar" +
+                File.pathSeparator + "ext/lucene-core-5.4.1.jar" +
+                File.pathSeparator + "ext/lucene-analyzers-common-5.4.1.jar" +
+                File.pathSeparator + "ext/lucene-queryparser-5.4.1.jar" +
                 File.pathSeparator + "ext/slf4j-api-1.6.0.jar" +
                 File.pathSeparator + "ext/org.osgi.core-4.2.0.jar" +
                 File.pathSeparator + "ext/org.osgi.enterprise-4.2.0.jar" +
@@ -595,7 +597,9 @@ public class Build extends BuildBase {
         javadoc("-sourcepath", "src/main", "org.h2.jdbc", "org.h2.jdbcx",
                 "org.h2.tools", "org.h2.api", "org.h2.engine", "org.h2.fulltext",
                 "-classpath",
-                "ext/lucene-core-3.6.2.jar" +
+                "ext/lucene-core-5.4.1.jar" + File.pathSeparator +
+                "ext/lucene-analyzers-common-5.4.1.jar" + File.pathSeparator +
+                "ext/lucene-queryparser-5.4.1.jar" +
                 File.pathSeparator + "ext/jts-core-1.14.0.jar",
                 "-docletpath", "bin" + File.pathSeparator + "temp",
                 "-doclet", "org.h2.build.doclet.Doclet");

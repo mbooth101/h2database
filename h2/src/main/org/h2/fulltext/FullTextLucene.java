@@ -19,10 +19,11 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.h2.api.Trigger;
@@ -303,13 +304,14 @@ public class FullTextLucene extends FullText {
             if (access == null) {
                 try {
                     Directory indexDir = path.startsWith(IN_MEMORY_PREFIX) ?
-                            new RAMDirectory() : FSDirectory.open(new File(path));
-                    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
-                    IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_30, analyzer);
+                            new RAMDirectory() : FSDirectory.open(new File(path).toPath());
+                    Analyzer analyzer = new StandardAnalyzer();
+                    analyzer.setVersion(Version.LUCENE_5_4_1);
+                    IndexWriterConfig conf = new IndexWriterConfig(analyzer);
                     conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
                     IndexWriter writer = new IndexWriter(indexDir, conf);
                     //see http://wiki.apache.org/lucene-java/NearRealtimeSearch
-                    IndexReader reader = IndexReader.open(writer, true);
+                    IndexReader reader = DirectoryReader.open(writer, true);
                     access = new IndexAccess();
                     access.writer = writer;
                     access.reader = reader;
@@ -394,7 +396,6 @@ public class FullTextLucene extends FullText {
         synchronized (INDEX_ACCESS) {
             try {
                 INDEX_ACCESS.remove(indexPath);
-                access.searcher.close();
                 access.reader.close();
                 access.writer.close();
             } catch (Exception e) {
@@ -430,7 +431,7 @@ public class FullTextLucene extends FullText {
             // reuse the same analyzer; it's thread-safe;
             // also allows subclasses to control the analyzer used.
             Analyzer analyzer = access.writer.getAnalyzer();
-            QueryParser parser = new QueryParser(Version.LUCENE_30,
+            QueryParser parser = new QueryParser(
                     LUCENE_FIELD_DATA, analyzer);
             Query query = parser.parse(text);
             // Lucene 3 insists on a hard limit and will not provide
@@ -604,9 +605,8 @@ public class FullTextLucene extends FullText {
             try {
                 indexAccess.writer.commit();
                 // recreate Searcher with the IndexWriter's reader.
-                indexAccess.searcher.close();
                 indexAccess.reader.close();
-                indexAccess.reader = IndexReader.open(indexAccess.writer, true);
+                indexAccess.reader = DirectoryReader.open(indexAccess.writer, true);
                 indexAccess.searcher = new IndexSearcher(indexAccess.reader);
             } catch (IOException e) {
                 throw convertException(e);
